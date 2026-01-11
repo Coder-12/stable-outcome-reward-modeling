@@ -1,3 +1,8 @@
+---
+layout: default
+title: Stable Outcome Reward Modeling via Pairwise Preference Learning
+---
+
 <div align="center">
 
 # Stable Outcome Reward Modeling via Pairwise Preference Learning
@@ -331,7 +336,6 @@ If you find this work useful, please cite:
 | Resource | Link |
 |----------|------|
 | 📄 Paper | [ArXiv (submitted, under moderation)](https://arxiv.org) |
-|📘 Project blog | https://coder-12.github.io/stable-outcome-reward-modeling/|
 | 🤗 Model | [HuggingFace](https://huggingface.co/LossFunctionLover/pairwise-orm-model) |
 | 🤗 Dataset | [HuggingFace](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs) |
 | 🐦 Twitter | [@iminevitable10](https://x.com/iminevitable10) |
