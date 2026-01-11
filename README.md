@@ -4,7 +4,7 @@
 
 **A robust, reproducible framework for training Outcome Reward Models (ORMs) for agentic reasoning systems**
 
-[![Paper](https://img.shields.io/badge/Paper-ArXiv_(submitted, under_moderation)-orange)](https://arxiv.org)
+[![Paper](https://img.shields.io/badge/Paper-ArXiv_(Under_Moderation)-orange)](https://arxiv.org)
 [![Model](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow)](https://huggingface.co/LossFunctionLover/pairwise-orm-model)
 [![Dataset](https://img.shields.io/badge/🤗%20Dataset-HuggingFace-blue)](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
