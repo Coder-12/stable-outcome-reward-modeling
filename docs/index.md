@@ -3,18 +3,14 @@ layout: default
 title: Stable Outcome Reward Modeling via Pairwise Preference Learning
 ---
 
-<div align="center">
-
 # Stable Outcome Reward Modeling via Pairwise Preference Learning
 
 **A robust, reproducible framework for training Outcome Reward Models (ORMs) for agentic reasoning systems**
 
-[![Paper](https://img.shields.io/badge/Paper-ArXiv_(submitted,_under_moderation)-orange)](https://arxiv.org)
-[![Model](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow)](https://huggingface.co/LossFunctionLover/pairwise-orm-model)
-[![Dataset](https://img.shields.io/badge/🤗%20Dataset-HuggingFace-blue)](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-</div>
+[Paper (ArXiv - Under Moderation)](https://arxiv.org){: .btn }
+[Model on HuggingFace](https://huggingface.co/LossFunctionLover/pairwise-orm-model){: .btn .btn-yellow }
+[Dataset on HuggingFace](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs){: .btn .btn-blue }
+[MIT License](LICENSE){: .btn .btn-green }
 
 ---
 
@@ -24,14 +20,9 @@ This repository provides the complete implementation for training and evaluating
 
 ## AI Safety Context
 
-This work is motivated by challenges in scalable oversight for increasingly
-capable language models. In agentic training loops (e.g., best-of-N sampling,
-tree search, iterative refinement), reward models act as control signals rather
-than static evaluators.
+This work is motivated by challenges in scalable oversight for increasingly capable language models. In agentic training loops (e.g., best-of-N sampling, tree search, iterative refinement), reward models act as control signals rather than static evaluators.
 
-This project focuses on identifying and enforcing outcome reward model
-properties—stability, calibration, and robustness—that are necessary for safe
-deployment in such settings.
+This project focuses on identifying and enforcing outcome reward model properties—stability, calibration, and robustness—that are necessary for safe deployment in such settings.
 
 This makes outcome reward modeling not just a performance component, but a safety-critical subsystem.
 
@@ -237,6 +228,7 @@ python src/eval/test_template_wise.py --checkpoint <checkpoint_path>
 
 ```python
 from src.eval.utils_load_orm import load_orm_model
+import torch
 
 # Load model
 model, tokenizer = load_orm_model(
@@ -335,7 +327,7 @@ If you find this work useful, please cite:
 
 | Resource | Link |
 |----------|------|
-| 📄 Paper | [ArXiv (submitted, under moderation)](https://arxiv.org) |
+| 📄 Paper | [ArXiv (Under Moderation)](https://arxiv.org) |
 | 🤗 Model | [HuggingFace](https://huggingface.co/LossFunctionLover/pairwise-orm-model) |
 | 🤗 Dataset | [HuggingFace](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs) |
 | 🐦 Twitter | [@iminevitable10](https://x.com/iminevitable10) |
@@ -382,8 +374,4 @@ This work builds upon foundational research in reward modeling and agentic reaso
 
 ---
 
-<div align="center">
-
-**If you find this useful, consider giving it a ⭐!**
-
-</div>
+*If you find this useful, consider giving it a ⭐ on [GitHub](https://github.com/Coder-12/stable-outcome-reward-modeling)!*
