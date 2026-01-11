@@ -1,0 +1,180 @@
+############################################
+# OS / Editor / IDE
+############################################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.tmp
+
+############################################
+# Python Bytecode / Cache
+############################################
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+############################################
+# Virtual Environments
+############################################
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+pyvenv.cfg
+
+############################################
+# Jupyter / IPython
+############################################
+.ipynb_checkpoints/
+.profile_default/
+.ipython/
+
+# Jupyter runtime & config
+jupyter_runtime/
+jupyter_config/
+
+############################################
+# Python Packaging
+############################################
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+############################################
+# Logs / Debug
+############################################
+logs/
+*.log
+*.out
+*.err
+*.trace
+*.pid
+
+############################################
+# Model Artifacts / Checkpoints
+############################################
+checkpoints/
+ckpts/
+models/
+weights/
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.onnx
+
+############################################
+# Experiment Tracking
+############################################
+wandb/
+mlruns/
+mlflow/
+tensorboard/
+tb_logs/
+runs/
+
+############################################
+# Datasets / Data
+############################################
+data/
+datasets/
+*.csv
+*.tsv
+*.parquet
+*.jsonl
+*.h5
+*.hdf5
+*.npz
+*.npy
+*.pkl
+*.pickle
+
+############################################
+# HuggingFace / Transformers Cache
+############################################
+.cache/huggingface/
+.cache/torch/
+.cache/transformers/
+hf_cache/
+
+############################################
+# LLM / Agent Outputs
+############################################
+outputs/
+results/
+predictions/
+generations/
+responses/
+traces/
+
+############################################
+# Secrets / Credentials
+############################################
+.env
+.env.*
+*.key
+*.pem
+*.crt
+*.secret
+secrets/
+credentials/
+
+############################################
+# CI / Coverage
+############################################
+.coverage
+coverage.xml
+htmlcov/
+.nox/
+.tox/
+
+############################################
+# Docker / Infra
+############################################
+.dockerignore
+docker-compose.override.yml
+*.docker.log
+
+############################################
+# Notebooks Exported Artifacts
+############################################
+*.pdf
+*.html
+*.svg
+
+############################################
+# Temporary Research Files
+############################################
+scratch/
+tmp/
+temp/
+debug/
+notes_private/
+
+############################################
+# macOS Python Symlink Artifacts (Homebrew)
+############################################
+python
+python3
+python3.*
+

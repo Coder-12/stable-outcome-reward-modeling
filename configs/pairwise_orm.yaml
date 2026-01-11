@@ -1,0 +1,31 @@
+
+# configs/pairwise_orm.yaml
+
+run_name: "pairwise-orm-opt1.3b-v1"
+seed: 42
+device: cuda
+
+model:
+  base_model: "facebook/opt-1.3b"
+  freeze_base: true
+
+data:
+  train_path: "data/processed/orm_pairwise_train.jsonl"
+  val_path: "data/processed/orm_pairwise_val.jsonl"
+  max_length: 512
+  num_workers: 4
+
+train:
+  max_steps: 800
+  epochs: 3
+  train_batch_size: 8
+  eval_batch_size: 16
+  lr: 2e-5
+  weight_decay: 0.01
+  log_every: 50
+  save_dir: "runs/pairwise_orm"
+
+# optional but useful
+eval:
+  max_val_batches: 10   # set to e.g. 500 if you want fast eval
+  early_stop_margin: 0.7
