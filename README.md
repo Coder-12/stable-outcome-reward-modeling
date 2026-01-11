@@ -4,11 +4,10 @@
 
 **A robust, reproducible framework for training Outcome Reward Models (ORMs) for agentic reasoning systems**
 
-[![Paper](https://img.shields.io/badge/Paper-ArXiv_(Under_Review)-orange)](https://arxiv.org)
+[![Paper](https://img.shields.io/badge/Paper-ArXiv_(submitted, under_moderation)-orange)](https://arxiv.org)
 [![Model](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow)](https://huggingface.co/LossFunctionLover/pairwise-orm-model)
 [![Dataset](https://img.shields.io/badge/🤗%20Dataset-HuggingFace-blue)](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Twitter](https://img.shields.io/badge/Twitter-@iminevitable10-1DA1F2?logo=twitter)](https://x.com/iminevitable10)
 
 </div>
 
@@ -17,6 +16,19 @@
 ## Overview
 
 This repository provides the complete implementation for training and evaluating **Pairwise Outcome Reward Models (ORMs)** as described in our paper. The pairwise formulation prioritizes stability and reproducibility under minimal supervision, achieving **96.3% pairwise accuracy** with training convergence in just **800 steps (~10 minutes on a single GPU)**.
+
+## AI Safety Context
+
+This work is motivated by challenges in scalable oversight for increasingly
+capable language models. In agentic training loops (e.g., best-of-N sampling,
+tree search, iterative refinement), reward models act as control signals rather
+than static evaluators.
+
+This project focuses on identifying and enforcing outcome reward model
+properties—stability, calibration, and robustness—that are necessary for safe
+deployment in such settings.
+
+This makes outcome reward modeling not just a performance component, but a safety-critical subsystem.
 
 ### Key Results
 
@@ -318,7 +330,7 @@ If you find this work useful, please cite:
 
 | Resource | Link |
 |----------|------|
-| 📄 Paper | [ArXiv (Under Review)](https://arxiv.org) |
+| 📄 Paper | [ArXiv (submitted, under moderation)](https://arxiv.org) |
 | 🤗 Model | [HuggingFace](https://huggingface.co/LossFunctionLover/pairwise-orm-model) |
 | 🤗 Dataset | [HuggingFace](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs) |
 | 🐦 Twitter | [@iminevitable10](https://x.com/iminevitable10) |
