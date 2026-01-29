@@ -4,7 +4,7 @@
 
 **A robust, reproducible framework for training Outcome Reward Models (ORMs) for agentic reasoning systems**
 
-[![Paper](https://img.shields.io/badge/Paper-ArXiv_(under_review)-orange)](https://arxiv.org)
+[![Paper](https://img.shields.io/badge/Paper-Preprint-blue)](#)
 [![Model](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow)](https://huggingface.co/LossFunctionLover/pairwise-orm-model)
 [![Dataset](https://img.shields.io/badge/🤗%20Dataset-HuggingFace-blue)](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
 [![License](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
@@ -358,9 +358,8 @@ def should_expand(trace: str, threshold: float = 0.0) -> bool:
 @article{mishra2026pairwise-orm,
   title={Stable Outcome Reward Modeling via Pairwise Preference Learning},
   author={Mishra, Aklesh},
-  journal={arXiv preprint},
   year={2026},
-  note={Under review}
+  note={Preprint}
 }
 ```
 
