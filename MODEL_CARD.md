@@ -8,7 +8,7 @@ tags:
 - outcome-reward-model
 - pairwise-preference
 datasets:
-- akleshmishra/orm-pairwise-preference-pairs
+- LossFunctionLover/orm-pairwise-preference-pairs
 metrics:
 - accuracy
 pipeline_tag: text-classification
@@ -20,7 +20,7 @@ model-index:
       name: Pairwise Preference Ranking
     dataset:
       name: ORM Pairwise Preference Pairs
-      type: akleshmishra/orm-pairwise-preference-pairs
+      type: LossFunctionLover/orm-pairwise-preference-pairs
     metrics:
     - type: accuracy
       value: 96.3
@@ -36,9 +36,7 @@ model-index:
 
 **A Robust Preference Learning Model for Agentic Reasoning Systems**
 
-[![Paper](https://img.shields.io/badge/Paper-ArXiv-red)](link-to-arxiv)
-[![Dataset](https://img.shields.io/badge/Dataset-HuggingFace-yellow)](https://huggingface.co/datasets/akleshmishra/orm-pairwise-preference-pairs)
-[![Code](https://img.shields.io/badge/Code-GitHub-blue)](your-github-repo)
+[![Dataset](https://img.shields.io/badge/Dataset-HuggingFace-yellow)](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
 
 </div>
 
@@ -70,9 +68,9 @@ Input Text (Reasoning Trace)
     ↓
 [Frozen Base LM Encoder]  ← Pre-trained, frozen during training
     ↓
-[Mean Pooling]
+[Final Non-Padding Token Pooling (attention-mask aware)]
     ↓
-[Lightweight MLP Head]    ← Only these parameters are trained
+[Lightweight Linear Head]    ← Only these parameters are trained
     ↓
 Scalar Reward Score
 ```
@@ -131,14 +129,14 @@ Each pair contains:
 ### Training Configuration
 
 **Hyperparameters:**
-- **Base Model**: [Specify your model, e.g., "Qwen/Qwen2.5-Math-1.5B-Instruct"]
+- **Base Model**: facebook/opt-1.3b
 - **Trainable Parameters**: Scoring head only (~500K-1M params)
 - **Optimizer**: AdamW
-  - Learning rate: 1e-4
+  - Learning rate: 2e-5
   - Betas: (0.9, 0.999)
   - Weight decay: 0.01
-- **Learning Rate Schedule**: Cosine decay with 50-step warmup
-- **Batch Size**: 32 pairs
+- **Learning Rate Schedule**: Linear warmup (50 steps) + constant
+- **Batch Size**: 8 pairs
 - **Gradient Clipping**: Max norm 1.0
 - **Training Steps**: 800
 - **Mixed Precision**: FP16
@@ -200,21 +198,47 @@ L = -log(sigmoid(f(x_chosen) - f(x_rejected)))
 ### Installation
 
 ```bash
-pip install transformers torch
+pip install transformers torch huggingface_hub
 ```
 
 ### Basic Usage
 
 ```python
-from transformers import AutoModel, AutoTokenizer
 import torch
+from transformers import AutoModel, AutoTokenizer
+from huggingface_hub import hf_hub_download
 
-# Load model and tokenizer
-model_name = "akleshmishra/pairwise-orm-model"
-model = AutoModel.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model.eval()
-model.to("cuda" if torch.cuda.is_available() else "cpu")
+# Download the trained model weights
+model_path = hf_hub_download(
+    repo_id="LossFunctionLover/pairwise-orm-model",
+    filename="pairwise_orm.pt"
+)
+
+# Load the base encoder (frozen during training)
+base_model = AutoModel.from_pretrained("facebook/opt-1.3b")
+tokenizer = AutoTokenizer.from_pretrained("facebook/opt-1.3b")
+
+# Load the trained scoring head weights
+ckpt = torch.load(model_path, map_location="cpu")
+state = ckpt["model_state"] if "model_state" in ckpt else ckpt
+
+head_state = {
+    k.replace("score.", ""): v
+    for k, v in state.items()
+    if k.startswith("score.")
+}
+
+assert set(head_state.keys()) == {"weight", "bias"}
+
+# Initialize scoring head (single linear layer)
+hidden_size = base_model.config.hidden_size
+scoring_head = torch.nn.Linear(hidden_size, 1)
+scoring_head.load_state_dict(head_state)
+
+# Move to device
+device = "cuda" if torch.cuda.is_available() else "cpu"
+base_model.eval().to(device)
+scoring_head.eval().to(device)
 
 # Score a single reasoning trace
 def score_trace(trace_text: str) -> float:
@@ -229,12 +253,16 @@ def score_trace(trace_text: str) -> float:
         max_length=512,
         padding=True
     )
-    inputs = {k: v.to(model.device) for k, v in inputs.items()}
+    inputs = {k: v.to(device) for k, v in inputs.items()}
     
     with torch.no_grad():
-        outputs = model(**inputs)
-        # Assuming outputs.logits is shape [batch, 1]
-        score = outputs.logits.squeeze(-1).cpu().item()
+        # Get base model embeddings
+        encoder_outputs = base_model(**inputs)
+        # Pool at actual sequence end (accounts for padding)
+        seq_lengths = inputs["attention_mask"].sum(dim=1) - 1
+        pooled = encoder_outputs.last_hidden_state[torch.arange(seq_lengths.size(0)), seq_lengths]
+        # Get reward score
+        score = scoring_head(pooled).squeeze(-1).cpu().item()
     
     return score
 
@@ -332,26 +360,25 @@ This work builds upon and complements:
 If you use this model in your research, please cite:
 
 ```bibtex
-@article{mishra2025orm,
-  title={An Empirical Study of Robust Preference Learning under Minimal Supervision},
+@article{mishra2026orm,
+  title={Stable Outcome Reward Modeling via Pairwise Preference Learning},
   author={Mishra, Aklesh},
-  journal={arXiv preprint arXiv:XXXX.XXXXX},
-  year={2025}
+  journal={arXiv preprint},
+  year={2026},
+  note={Under review}
 }
 ```
 
 ## 🔗 Resources
 
-- 📄 **Paper**: [ArXiv](link-to-arxiv) (Coming soon)
-- 💾 **Dataset**: [HuggingFace](https://huggingface.co/datasets/akleshmishra/orm-pairwise-preference-pairs)
-- 💻 **Code**: [GitHub](your-github-repo-url)
-- 📊 **Training Logs**: [Weights & Biases](wandb-link) (if available)
+- 📄 **Paper**: Submitted to arXiv (under review)
+- 💾 **Dataset**: [HuggingFace](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
 
 ## 📧 Contact
 
 **Aklesh Mishra**
 - Email: akleshmishra7@gmail.com
-- GitHub: [@your-username](https://github.com/your-username)
+- Independent Researcher
 
 ## 📝 License
 
@@ -382,4 +409,4 @@ This research builds upon months of dedicated work in preference learning and ag
 
 ---
 
-**Last Updated**: November 27, 2025
+**Last Updated**: January 22, 2026

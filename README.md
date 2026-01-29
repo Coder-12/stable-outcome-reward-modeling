@@ -4,10 +4,10 @@
 
 **A robust, reproducible framework for training Outcome Reward Models (ORMs) for agentic reasoning systems**
 
-[![Paper](https://img.shields.io/badge/Paper-ArXiv_(submitted,_under_moderation)-orange)](https://arxiv.org)
+[![Paper](https://img.shields.io/badge/Paper-ArXiv_(under_review)-orange)](https://arxiv.org)
 [![Model](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow)](https://huggingface.co/LossFunctionLover/pairwise-orm-model)
 [![Dataset](https://img.shields.io/badge/🤗%20Dataset-HuggingFace-blue)](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
 
 </div>
 
@@ -19,14 +19,9 @@ This repository provides the complete implementation for training and evaluating
 
 ## AI Safety Context
 
-This work is motivated by challenges in scalable oversight for increasingly
-capable language models. In agentic training loops (e.g., best-of-N sampling,
-tree search, iterative refinement), reward models act as control signals rather
-than static evaluators.
+This work is motivated by challenges in scalable oversight for increasingly capable language models. In agentic training loops (e.g., best-of-N sampling, tree search, iterative refinement), reward models act as control signals rather than static evaluators.
 
-This project focuses on identifying and enforcing outcome reward model
-properties—stability, calibration, and robustness—that are necessary for safe
-deployment in such settings.
+This project focuses on identifying and enforcing outcome reward model properties—stability, calibration, and robustness—that are necessary for safe deployment in such settings.
 
 This makes outcome reward modeling not just a performance component, but a safety-critical subsystem.
 
@@ -94,7 +89,7 @@ python src/training/train_pairwise_orm.py --config configs/pairwise_orm.yaml
 
 ```bash
 python src/eval/eval_pairwise_orm.py \
-  --checkpoint runs/pairwise_orm/orm_pairwise_final.pt \
+  --checkpoint runs/pairwise_orm/best_model.pt \
   --base_model facebook/opt-1.3b \
   --test_path data/processed/orm_pairwise_test.jsonl
 ```
@@ -108,11 +103,11 @@ Input Text (Reasoning Trace)
          ↓
 [Frozen Base LM Encoder]  ← Pre-trained, frozen during training
          ↓
-    [Mean Pooling]
+[Final Token (EOS) Pooling - attention-mask aware]
          ↓
- [Lightweight MLP Head]   ← Only these parameters are trained
+[Lightweight Linear Head] ← Only these parameters are trained
          ↓
-  Scalar Reward Score
+Scalar Reward Score
 ```
 
 **Design Philosophy:**
@@ -126,18 +121,20 @@ Input Text (Reasoning Trace)
 
 | Parameter | Value |
 |-----------|-------|
-| Base Model | [facebook/opt-1.3b](https://huggingface.co/facebook/opt-1.3b) |
+| Base Model | facebook/opt-1.3b |
 | Optimizer | AdamW (β₁=0.9, β₂=0.999) |
-| Learning Rate | 1e-4 with cosine decay |
-| Batch Size | 32 pairs |
+| Learning Rate | 2e-5 |
+| LR Schedule | Linear warmup (50 steps) + constant |
+| Batch Size | 8 pairs |
 | Gradient Clipping | Max norm 1.0 |
 | Training Steps | 800 |
 | Warmup | 50 steps |
 | Precision | FP16 |
 
 **Loss Function:**
+
 ```python
-L = -log(σ(f(x_chosen) - f(x_rejected)))
+L = -log(sigmoid(f(x_chosen) - f(x_rejected)))
 ```
 
 ---
@@ -147,12 +144,13 @@ L = -log(σ(f(x_chosen) - f(x_rejected)))
 The model is trained on the **ORM Pairwise Preference Pairs** dataset — a carefully curated collection of reasoning trace preferences.
 
 | Split | Pairs | Negatives/Positive |
-|-------|-------|-------------------|
+|-------|-------|--------------------|
 | Train | 41,656 | 8 |
 | Validation | 1,144 | 4 |
 | Test | 1,232 | 4 |
 
-**Data Format:**
+### Data Format
+
 ```json
 {
   "chosen": "Step-by-step reasoning trace (correct)",
@@ -166,12 +164,13 @@ The model is trained on the **ORM Pairwise Preference Pairs** dataset — a care
 }
 ```
 
-**Quality Metrics (Source Pointwise Dataset):**
-- Pearson correlation: r = 0.87
-- Spearman correlation: ρ = 0.83
-- Base model pairwise accuracy: 98.2%
+### Quality Metrics (Source Pointwise Dataset)
 
-📦 **Download:** [HuggingFace Dataset](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
+- **Pearson correlation**: r = 0.87
+- **Spearman correlation**: ρ = 0.83
+- **Base model pairwise accuracy**: 98.2%
+
+📦 **Download**: [HuggingFace Dataset](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
 
 ---
 
@@ -180,23 +179,10 @@ The model is trained on the **ORM Pairwise Preference Pairs** dataset — a care
 ### Core Metrics
 
 ```bash
-# Standard evaluation
 python src/eval/eval_pairwise_orm.py \
-  --checkpoint <checkpoint_path> \
+  --checkpoint runs/pairwise_orm/best_model.pt \
+  --base_model facebook/opt-1.3b \
   --test_path data/processed/orm_pairwise_test.jsonl
-```
-
-### Robustness Tests
-
-```bash
-# Anti-symmetry validation (label-swap test)
-python src/eval/test_label_swap.py --checkpoint <checkpoint_path>
-
-# Near-tie stress test
-python src/eval/test_near_tie.py --checkpoint <checkpoint_path>
-
-# Template-wise analysis
-python src/eval/test_template_wise.py --checkpoint <checkpoint_path>
 ```
 
 ### Results Summary
@@ -231,26 +217,92 @@ python src/eval/test_template_wise.py --checkpoint <checkpoint_path>
 ### Scoring Reasoning Traces
 
 ```python
-from src.eval.utils_load_orm import load_orm_model
+import torch
+from transformers import AutoModel, AutoTokenizer
+from huggingface_hub import hf_hub_download
 
-# Load model
-model, tokenizer = load_orm_model(
-    checkpoint_path="runs/pairwise_orm/orm_pairwise_final.pt",
-    base_model_path="facebook/opt-1.3b"
+# Download the trained model weights
+model_path = hf_hub_download(
+    repo_id="LossFunctionLover/pairwise-orm-model",
+    filename="pairwise_orm.pt"
 )
 
-# Score a trace
-def score_trace(trace: str) -> float:
-    inputs = tokenizer(trace, return_tensors="pt", truncation=True, max_length=512)
+# Load the base encoder (frozen during training)
+base_model = AutoModel.from_pretrained("facebook/opt-1.3b")
+tokenizer = AutoTokenizer.from_pretrained("facebook/opt-1.3b")
+
+# Load the trained scoring head weights
+ckpt = torch.load(model_path, map_location="cpu")
+state = ckpt["model_state"] if "model_state" in ckpt else ckpt
+
+head_state = {
+    k.replace("score.", ""): v
+    for k, v in state.items()
+    if k.startswith("score.")
+}
+
+assert set(head_state.keys()) == {"weight", "bias"}
+
+# Initialize scoring head (single linear layer)
+hidden_size = base_model.config.hidden_size
+scoring_head = torch.nn.Linear(hidden_size, 1)
+scoring_head.load_state_dict(head_state)
+
+# Move to device
+device = "cuda" if torch.cuda.is_available() else "cpu"
+base_model.eval().to(device)
+scoring_head.eval().to(device)
+
+# Score a single reasoning trace
+def score_trace(trace_text: str) -> float:
+    """
+    Compute scalar reward for a reasoning trace.
+    Higher scores indicate better reasoning quality.
+    """
+    inputs = tokenizer(
+        trace_text,
+        return_tensors="pt",
+        truncation=True,
+        max_length=512,
+        padding=True
+    )
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+    
     with torch.no_grad():
-        score = model(**inputs).squeeze().item()
+        # Get base model embeddings
+        encoder_outputs = base_model(**inputs)
+        # Pool at actual sequence end (accounts for padding)
+        seq_lengths = inputs["attention_mask"].sum(dim=1) - 1
+        pooled = encoder_outputs.last_hidden_state[torch.arange(seq_lengths.size(0)), seq_lengths]
+        # Get reward score
+        score = scoring_head(pooled).squeeze(-1).cpu().item()
+    
     return score
 
-# Compare traces
-score_a = score_trace("1. Calculate cost: $20/4 = $5\n2. Total: $5 × 10 = $50\nFinal Answer: $50")
-score_b = score_trace("1. Assume linear growth\n2. Random calculation\nFinal Answer: $38")
+# Example: Compare two reasoning traces
+trace_1 = """
+1. Calculate the cost per item: $20 / 4 = $5
+2. Calculate total for 10 items: $5 × 10 = $50
+3. Apply 10% discount: $50 × 0.9 = $45
 
-print(f"Preferred: {'Trace A' if score_a > score_b else 'Trace B'}")
+Final Answer: $45
+"""
+
+trace_2 = """
+1. Assume linear growth incorrectly
+2. Multiply by unrelated constant
+3. Round result arbitrarily
+
+Final Answer: $38
+"""
+
+score_1 = score_trace(trace_1)
+score_2 = score_trace(trace_2)
+
+print(f"Trace 1 score: {score_1:.3f}")
+print(f"Trace 2 score: {score_2:.3f}")
+print(f"Preferred trace: {'Trace 1' if score_1 > score_2 else 'Trace 2'}")
+print(f"Confidence (margin): {abs(score_1 - score_2):.3f}")
 ```
 
 ### Best-of-N Sampling
@@ -267,12 +319,6 @@ def select_best(candidates: list[str]) -> str:
 # Tree search pruning
 def should_expand(trace: str, threshold: float = 0.0) -> bool:
     return score_trace(trace) > threshold
-
-# Combine with Process Reward Models
-def hybrid_score(trace: str, orm_model, prm_model, alpha: float = 0.5):
-    orm_score = orm_model.score(trace)
-    prm_score = prm_model.score_steps(trace).mean()
-    return alpha * orm_score + (1 - alpha) * prm_score
 ```
 
 ---
@@ -282,30 +328,25 @@ def hybrid_score(trace: str, orm_model, prm_model, alpha: float = 0.5):
 ```
 .
 ├── configs/
-│   └── pairwise_orm.yaml          # Training configuration
+│   └── pairwise_orm.yaml
 ├── data/
-│   └── processed/                 # Pairwise datasets (JSONL)
+│   └── processed/
 ├── src/
 │   ├── data/
 │   │   └── dataloader_pairwise_orm.py
 │   ├── eval/
-│   │   ├── eval_pairwise_orm.py   # Main evaluation script
-│   │   ├── test_label_swap.py     # Anti-symmetry test
-│   │   ├── test_near_tie.py       # Uncertainty calibration
-│   │   └── utils_load_orm.py      # Model loading utilities
+│   │   └── eval_pairwise_orm.py
 │   ├── losses/
-│   │   └── pairwise_loss.py       # Logistic pairwise loss
+│   │   └── pairwise_loss.py
 │   ├── models/
-│   │   └── orm_scorer.py          # ORM architecture
+│   │   └── orm_scorer.py
 │   ├── training/
-│   │   └── train_pairwise_orm.py  # Training loop
+│   │   └── train_pairwise_orm.py
 │   └── utils/
-│       ├── config_loader.py
-│       └── training_utils.py
-├── tools/                         # Dataset construction utilities
-├── runs/                          # Checkpoints and logs
-├── DATASET_CARD.md
-├── MODEL_CARD.md
+│       └── config_loader.py
+├── tools/
+├── runs/
+├── README.md
 └── requirements.txt
 ```
 
@@ -313,73 +354,37 @@ def hybrid_score(trace: str, orm_model, prm_model, alpha: float = 0.5):
 
 ## Citation
 
-If you find this work useful, please cite:
-
 ```bibtex
-@article{mishra2025pairwise-orm,
+@article{mishra2026pairwise-orm,
   title={Stable Outcome Reward Modeling via Pairwise Preference Learning},
   author={Mishra, Aklesh},
-  journal={arXiv preprint arXiv:XXXX.XXXXX},
-  year={2025}
+  journal={arXiv preprint},
+  year={2026},
+  note={Under review}
 }
 ```
 
 ---
 
-## Resources
-
-| Resource | Link |
-|----------|------|
-| 📄 Paper | [ArXiv (submitted, under moderation)](https://arxiv.org) |
-|📘 Project blog | https://coder-12.github.io/stable-outcome-reward-modeling/|
-| 🤗 Model | [HuggingFace](https://huggingface.co/LossFunctionLover/pairwise-orm-model) |
-| 🤗 Dataset | [HuggingFace](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs) |
-| 🐦 Twitter | [@iminevitable10](https://x.com/iminevitable10) |
-| 💻 GitHub | [Coder-12](https://github.com/Coder-12) |
-
----
-
-## Contributing
-
-We welcome contributions! Whether it's bug fixes, new features, documentation improvements, or research extensions, we'd love your help.
-
-Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a pull request.
-
-**Areas we're especially interested in:**
-- Multi-domain evaluation (code, science, multi-turn reasoning)
-- Integration with other agentic frameworks
-- Training efficiency improvements
-- Multilingual support
-
----
-
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
----
-
-## Acknowledgments
-
-This work builds upon foundational research in reward modeling and agentic reasoning:
-
-- [MagiCore-Agentic](https://arxiv.org/abs/2409.12147) — Robust multi-step reasoning through agentic orchestration
-- [Training Verifiers](https://arxiv.org/abs/2110.14168) — Math word problem verification
-- [Process & Outcome Feedback](https://arxiv.org/abs/2211.14275) — Combining reward signals
+This project is licensed under the **Apache 2.0 License**. See `LICENSE` for details.
 
 ---
 
 ## Contact
 
-**Aklesh Mishra**  
-📧 akleshmishra7@gmail.com  
-🐦 [@iminevitable10](https://x.com/iminevitable10)  
-💻 [github.com/Coder-12](https://github.com/Coder-12)
+**Aklesh Mishra**
+- Email: akleshmishra7@gmail.com
+- GitHub: [@Coder-12](https://github.com/Coder-12)
+- HuggingFace: [@LossFunctionLover](https://huggingface.co/LossFunctionLover)
 
 ---
 
-<div align="center">
+## Acknowledgments
 
-**If you find this useful, consider giving it a ⭐!**
+This research builds upon months of dedicated work in preference learning and agentic reasoning systems. Special thanks to:
 
-</div>
+- The **MagiCore-Agentic** team for their inspiring work on multi-step agentic reasoning
+- The broader ML community for foundational research in reward modeling and RLHF
+- Contributors to open-source tools (Transformers, PyTorch) that made this work possible

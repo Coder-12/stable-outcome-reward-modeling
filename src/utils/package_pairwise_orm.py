@@ -50,7 +50,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--best_model", required=True)
     parser.add_argument("--config", required=True)
-    parser.add_argument("--output", default="orm_pairwise_final.pt")
+    parser.add_argument("--output", default="orm_pairwise.pt")
 
     # metrics (explicit = no assumptions)
     parser.add_argument("--val_acc", type=float, required=True)
