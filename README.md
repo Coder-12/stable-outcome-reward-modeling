@@ -4,7 +4,7 @@
 
 **A robust, reproducible framework for training Outcome Reward Models (ORMs) for agentic reasoning systems**
 
-[![Paper](https://img.shields.io/badge/Paper-Preprint-blue)](#)
+[![Paper](https://img.shields.io/badge/Paper-Preprint-blue)](paper/Stable_Outcome_Reward_Modeling_Pairwise_ORM.pdf)
 [![Model](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow)](https://huggingface.co/LossFunctionLover/pairwise-orm-model)
 [![Dataset](https://img.shields.io/badge/🤗%20Dataset-HuggingFace-blue)](https://huggingface.co/datasets/LossFunctionLover/orm-pairwise-preference-pairs)
 [![License](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
